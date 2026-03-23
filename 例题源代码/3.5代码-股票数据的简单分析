@@ -1,0 +1,130 @@
+=============================
+3.5.1 抓取股票数据
+=============================
+import urllib.request
+import re
+import csv
+import os
+
+url = 'http://quote.stockstar.com/stock/ranklist_a_3_1_1.html'
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64)"}
+request = urllib.request.Request(url=url, headers=headers)
+response = urllib.request.urlopen(request)
+content = response.read().decode('gbk')
+print(content)
+
+# 使用原始字符串避免转义警告
+pattern = re.compile(r'<tbody[\s\S]*</tbody>')
+body = re.findall(pattern, str(content))
+
+if not body:
+    print("未找到tbody内容")
+    exit()
+
+pattern = re.compile(r'>(.*?)<')
+stock_page = re.findall(pattern, body[0])
+
+# 使用列表推导式删除空字符串，更安全
+stock_total = [item for item in stock_page if item != '']
+stock_last = stock_total[:]  # 其实这里可以直接用 stock_last = stock_total
+
+head = ['代码', '简称', '最新价', '涨跌幅', '涨跌额', '5分钟涨幅']
+lst = []
+
+# 注意缩进：for循环内的代码必须缩进
+for i in range(0, len(stock_last), 6):
+    # 确保不越界，如果最后一组不足6个则跳过（这里简单处理）
+    if i + 5 < len(stock_last):
+        lst.append([
+            stock_last[i], stock_last[i+1], stock_last[i+2],
+            stock_last[i+3], stock_last[i+4], stock_last[i+5]
+        ])
+
+# 路径使用双反斜杠或原始字符串
+os.chdir(r'D:')  # 或者 'D:\\data_mining\\gupiaoshujufenxi'
+
+with open('test.csv', 'a', newline='', encoding='utf-8') as f:
+    f_csv = csv.writer(f)
+    f_csv.writerow(head)
+    f_csv.writerows(lst)  # 直接写入所有行，更简洁
+
+=============================
+3.5.2 股票数据的各指标折线图
+=============================
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 读取数据（确保路径正确，编码一致）
+data = pd.read_csv(r'D:\test.csv', encoding='utf-8')
+
+# 设置中文字体（以黑体为例）
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 绘图
+data['最新价'].plot(grid=True)
+data['涨跌幅'].plot(grid=True)
+data['涨跌额'].plot(grid=True)
+plt.legend(['最新价', '涨跌幅', '涨跌额'])
+plt.show()
+=============================
+3.5.3 各股票的5分钟涨幅柱状图
+=============================
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 1. 读取数据（使用正确的路径和编码）
+file_path = r'D:\test.csv'  # 根据你的实际路径修改
+data = pd.read_csv(file_path, encoding='utf-8')
+
+# 2. 设置中文字体（以黑体为例）
+plt.rcParams['font.sans-serif'] = ['SimHei']   # 或 ['Microsoft YaHei']
+plt.rcParams['axes.unicode_minus'] = False     # 解决负号显示问题
+
+# 3. 准备数据：按每6只股票一组（最后一组可能不足6只）
+names = data['简称'].values          # 股票名称列表
+changes = data['5分钟涨幅'].values   # 5分钟涨幅列表
+
+groups = []  # 存储每组股票名称
+groups_changes = []  # 存储每组涨幅
+
+for i in range(0, len(names), 6):
+    group_names = names[i:i+6]
+    group_changes = changes[i:i+6]
+    groups.append(group_names)
+    groups_changes.append(group_changes)
+
+# 4. 为每组绘制条形图（每组合并到一张图）
+for idx, (names_group, changes_group) in enumerate(zip(groups, groups_changes)):
+    plt.figure()  # 新建一张图
+    x = range(len(names_group))
+    plt.bar(x, changes_group, width=0.3, label='5分钟涨幅')
+    plt.xticks(x, names_group, rotation=45, ha='right')  # 旋转标签避免重叠
+    plt.title(f'第{idx+1}张图')
+    plt.legend()
+    plt.tight_layout()  # 自动调整布局
+    plt.show()
+
+=============================
+3.5.4 股票各指标之间的关系对比
+============================= 
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 直接使用绝对路径读取文件，避免 chdir 的麻烦
+file_path = r'D:\test.csv'  # 请根据实际路径修改
+data = pd.read_csv(file_path, encoding='utf-8')  # 统一使用 utf-8 编码
+
+# 设置中文字体（以黑体为例）
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 如果不行，改为 ['Microsoft YaHei']
+plt.rcParams['axes.unicode_minus'] = False    # 解决负号显示问题
+
+# 选取需要绘制的列
+small = data[['最新价', '涨跌幅', '涨跌额', '5分钟涨幅']]
+
+# 绘制散点矩阵图
+st = pd.plotting.scatter_matrix(small, alpha=0.5, figsize=(10, 10))
+plt.show()
+
+
