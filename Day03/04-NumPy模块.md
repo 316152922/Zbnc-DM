@@ -187,9 +187,11 @@ print("转置 (.T):\n", a.T)
 import numpy as np
 from numpy.linalg import inv
 
-a = np.mat([[1, 0, 0], [3, 4, 0], [1, 2, 3]])
+a = np.array([[1, 0, 0], [3, 4, 0], [1, 2, 3]])
 print("逆矩阵 (inv):\n", inv(a))
-print("逆矩阵 (.I):\n", a.I)
+
+# 验证逆矩阵（单位矩阵）
+print("a * inv(a):\n", a @ inv(a))
 ```
 
 ---
