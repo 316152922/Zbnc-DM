@@ -1,6 +1,7 @@
 =============================
 3.5.1 抓取股票数据
 =============================
+```python
 import urllib.request
 import re
 import csv
@@ -47,7 +48,7 @@ with open('test.csv', 'a', newline='', encoding='utf-8') as f:
     f_csv = csv.writer(f)
     f_csv.writerow(head)
     f_csv.writerows(lst)  # 直接写入所有行，更简洁
-
+```
 =============================
 3.5.2 股票数据的各指标折线图
 =============================
